@@ -209,12 +209,6 @@ namespace Server.Items
                 return false;
             }
 
-            if (this.Value - skill.Cap > 5.0)
-            {
-                from.SendLocalizedMessage(1071117); // You cannot use this item for it.
-                return false;
-            }
-
             return true;
         }
 
