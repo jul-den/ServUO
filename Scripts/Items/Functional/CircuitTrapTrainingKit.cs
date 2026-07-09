@@ -127,21 +127,26 @@ namespace Server.Items
         public override void Deserialize(GenericReader reader)
         {
             base.Deserialize(reader);
-
             int version = reader.ReadEncodedInt();
 
-            var count = reader.ReadInt();
-
+            int count = reader.ReadInt();
             for (int i = 0; i < count; i++)
-            {
                 Path.Add(reader.ReadInt());
-            }
 
             count = reader.ReadInt();
-
             for (int i = 0; i < count; i++)
-            {
                 Progress.Add(reader.ReadInt());
+
+            // Restore grid size from the saved path (last cell = finish cell)
+            if (Path.Count > 0 && Enum.IsDefined(typeof(CircuitCount), Path[Path.Count - 1] + 1))
+            {
+                _Count = (CircuitCount)(Path[Path.Count - 1] + 1);
+            }
+            else
+            {
+                // Data corrupted – reset so OnRemoveTrap creates a fresh path
+                Path.Clear();
+                Progress.Clear();
             }
         }
     }
