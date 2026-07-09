@@ -43,7 +43,8 @@ namespace Server.Multis
         public List<Item> Cannons { get; set; }
         public Dictionary<Item, DeckItem> Addons { get; set; }
 
-        private Dictionary<Item, Item> _InternalCannon;
+        // private Dictionary<Item, Item> _InternalCannon;
+        private Direction? _oldFacing = null;
 
         [CommandProperty(AccessLevel.GameMaster)]
         public Mobile GalleonPilot { get; private set; }
@@ -301,7 +302,22 @@ namespace Server.Multis
                     break;
             }
 
-            if (_InternalCannon != null)
+            if (_oldFacing != null && _oldFacing != Facing && Cannons != null && Cannons.Count > 0)
+            {
+
+                int delta = ( GetValueForDirection(Facing) - GetValueForDirection((Direction)_oldFacing) + 4) % 4;
+                _oldFacing = null;
+                foreach (Item cannon in Cannons)
+                {
+                    if (cannon == null || cannon.Deleted) continue;
+                    Point3D newPos = Rotate(cannon.Location, delta);
+                    cannon.MoveToWorld(newPos, Map);
+                }
+                UpdateCannonIDs();
+            }
+
+             /*
+             if (_InternalCannon != null)
             {
                 foreach (KeyValuePair<Item, Item> kvp in _InternalCannon)
                 {
@@ -315,6 +331,7 @@ namespace Server.Multis
                 _InternalCannon.Clear();
                 _InternalCannon = null;
             }
+            */
         }
 
         public override bool Contains(int x, int y)
@@ -918,6 +935,8 @@ namespace Server.Multis
         public override void OnDryDock(Mobile from)
         {
             if (Cannons != null)
+                _oldFacing = Facing;
+            /*
             {
                 if (_InternalCannon == null)
                     _InternalCannon = new Dictionary<Item, Item>();
@@ -930,6 +949,7 @@ namespace Server.Multis
                         _InternalCannon[c] = pad;
                 });
             }
+            */
 
             base.OnDryDock(from);
         }
@@ -1606,6 +1626,9 @@ namespace Server.Multis
                     fixture.Galleon = this;
                 }
             }
+            // _InternalCannon was lost after deserialization (server restart)
+            // but we have cannons that need to be placed on the new pads.
+            _oldFacing = (Map == Map.Internal && Cannons != null && Cannons.Count > 0) ? (Direction?)Facing : null;
         }
     }
 
